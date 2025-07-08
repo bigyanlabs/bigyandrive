@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS users {
+   phone INT (12) UNIQUE
+   password VARCHAR (16) NOT NULL
+}
