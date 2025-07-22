@@ -189,7 +189,7 @@ async def download_file(
             FileModel.status != FileStatus.DELETED
         )
     ).first()
-    
+    print(file_record)
     if not file_record:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

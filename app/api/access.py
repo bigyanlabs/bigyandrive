@@ -1,4 +1,3 @@
-# access.py
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session, select
@@ -7,14 +6,16 @@ import os
 from datetime import datetime, timezone
 
 from app.database import get_session
-from app.models import User, File as FileModel, Exposure, Access, AccessStatus
+from app.models import File as FileModel, Exposure, Access, AccessStatus
 from app.schemas import AccessRequest, AccessResponse
 from app.core import (
     can_access_file,
     should_blacklist_ip,
     blacklist_ip,
     get_path,
-    sanitize_user_agent
+    sanitize_user_agent,
+    is_exposure_expired,
+    is_ip_blacklisted
 )
 
 router = APIRouter(prefix="/access", tags=["access"])
@@ -50,30 +51,55 @@ async def request_access(
             detail="Invalid exposure record"
         )
     
-    # Check if access is allowed
-    can_access, reason = can_access_file(client_ip, exposure, session)
-    
-    if not can_access:
-        # Create failed access record
-        failed_access = Access(
-            exposure_id=exposure.id,
-            requester_ip=client_ip,
-            user_agent=user_agent,
-            status=AccessStatus.DENIED
-        )
-        
-        session.add(failed_access)
-        session.commit()
-        
-        # Check if IP should be blacklisted
-        if should_blacklist_ip(client_ip, exposure.id, session):
-            blacklist_ip(client_ip, exposure.id, session)
-            reason = "IP address has been blacklisted due to multiple failed attempts"
-        
+    # Basic checks first (before checking approval status)
+    if not exposure.is_active:
         return AccessResponse(
             access_granted=False,
-            message=reason
+            message="Exposure is no longer active"
         )
+    
+    if is_exposure_expired(exposure):
+        return AccessResponse(
+            access_granted=False,
+            message="Exposure has expired"
+        )
+    
+    if is_ip_blacklisted(client_ip, exposure.id, session):
+        return AccessResponse(
+            access_granted=False,
+            message="IP address is blacklisted"
+        )
+    
+    # Check if user already has a pending or approved request
+    existing_access = session.exec(
+        select(Access).where(
+            Access.exposure_id == exposure.id,
+            Access.requester_ip == client_ip,
+            Access.user_agent == user_agent
+        )
+    ).first()
+    
+    if existing_access:
+        if existing_access.status == AccessStatus.PENDING:
+            return AccessResponse(
+                access_granted=False,
+                message="Access request already pending approval"
+            )
+        elif existing_access.status == AccessStatus.APPROVED:
+            # Get file info for approved access
+            file_record = session.get(FileModel, exposure.file_id)
+            return AccessResponse(
+                access_granted=True,
+                message="Access already granted",
+                file_name=file_record.original_name if file_record else None,
+                file_size=file_record.file_size if file_record else None,
+                permission=exposure.permission.value
+            )
+        elif existing_access.status == AccessStatus.DENIED:
+            return AccessResponse(
+                access_granted=False,
+                message="Access was denied by the file owner"
+            )
     
     # For premium users, grant immediate access
     if exposure.exposure_type.value == "premium":
@@ -132,6 +158,7 @@ async def download_exposed_file(
     
     # Get client IP
     client_ip = request.client.host if request.client else "unknown"
+    user_agent = sanitize_user_agent(request.headers.get("user-agent", ""))
     
     # Get exposure
     exposure = session.exec(
@@ -153,7 +180,7 @@ async def download_exposed_file(
             detail="Invalid exposure record"
         )
     
-    # Check if access is allowed
+    # Check if access is allowed (this checks for APPROVED access)
     can_access, reason = can_access_file(client_ip, exposure, session)
     
     if not can_access:
@@ -189,6 +216,7 @@ async def download_exposed_file(
         select(Access).where(
             Access.exposure_id == exposure.id,
             Access.requester_ip == client_ip,
+            Access.user_agent == user_agent,
             Access.status == AccessStatus.APPROVED
         )
     ).first()
@@ -224,6 +252,7 @@ async def view_file_info(
     
     # Get client IP
     client_ip = request.client.host if request.client else "unknown"
+    user_agent = sanitize_user_agent(request.headers.get("user-agent", ""))
     
     # Get exposure
     exposure = session.exec(
@@ -245,7 +274,6 @@ async def view_file_info(
             detail="Invalid exposure record"
         )
     
-    # Check if access is allowed
     can_access, reason = can_access_file(client_ip, exposure, session)
     
     if not can_access:
@@ -267,6 +295,7 @@ async def view_file_info(
         select(Access).where(
             Access.exposure_id == exposure.id,
             Access.requester_ip == client_ip,
+            Access.user_agent == user_agent,
             Access.status == AccessStatus.APPROVED
         )
     ).first()

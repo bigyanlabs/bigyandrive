@@ -70,8 +70,8 @@ async def expose_file(
             expires_at = datetime.now(timezone.utc) + timedelta(minutes=expose_data.expires_minutes)
     else:
         # Free users: maximum 5 minutes expiry
-        expiry_minutes = expose_data.expires_minutes if expose_data.expires_minutes else 5
-        if expiry_minutes > 5:
+        expiry_minutes = expose_data.expires_minutes if expose_data.expires_minutes else 30
+        if expiry_minutes > 30:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Free users can only expose files for a maximum of 5 minutes"

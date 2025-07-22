@@ -1,7 +1,15 @@
 from datetime import datetime, timezone, timedelta
 from sqlmodel import Session, select
-from app.models import User, File, Exposure, Access, Blacklist, UserType, AccessStatus
+from app.models import User, Exposure, Access, Blacklist, UserType, AccessStatus
 from app.config import settings
+
+
+def _ensure_timezone_aware(dt: datetime) -> datetime:
+    """Convert timezone-naive datetime to timezone-aware UTC datetime"""
+    if dt.tzinfo is None:
+        # Assume naive datetime is in UTC
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
 
 
 def can_expose_file(user: User, session: Session) -> bool:
@@ -18,15 +26,24 @@ def can_expose_file(user: User, session: Session) -> bool:
 
 def is_ip_blacklisted(ip_address: str, exposure_id: int, session: Session) -> bool:
     """Check if IP is blacklisted for a specific exposure"""
+    current_time = datetime.now(timezone.utc)
+    
     query = select(Blacklist).where(
         Blacklist.ip_address == ip_address,
         Blacklist.exposure_id == exposure_id,
-        Blacklist.is_active == True,
-        Blacklist.expires_at > datetime.now(timezone.utc)
+        Blacklist.is_active == True
     )
     
-    blacklist_entry = session.exec(query).first()
-    return blacklist_entry is not None
+    blacklist_entries = session.exec(query).all()
+    
+    # Check each entry for expiration with proper timezone handling
+    for entry in blacklist_entries:
+        if entry.expires_at:
+            expires_at = _ensure_timezone_aware(entry.expires_at)
+            if current_time < expires_at:
+                return True
+    
+    return False
 
 
 def get_failed_attempts(ip_address: str, exposure_id: int, session: Session) -> int:
@@ -72,7 +89,10 @@ def is_exposure_expired(exposure: Exposure) -> bool:
     if exposure.expires_at is None:
         return False
     
-    return datetime.now(timezone.utc) > exposure.expires_at
+    current_time = datetime.now(timezone.utc)
+    expires_at = _ensure_timezone_aware(exposure.expires_at)
+    
+    return current_time > expires_at
 
 
 def can_access_file(ip_address: str, exposure: Exposure, session: Session) -> tuple[bool, str]:
@@ -85,6 +105,7 @@ def can_access_file(ip_address: str, exposure: Exposure, session: Session) -> tu
     
     if exposure.id is None:
         return False, "Exposure ID is missing"
+        
     if is_ip_blacklisted(ip_address, exposure.id, session):
         return False, "IP address is blacklisted"
     
