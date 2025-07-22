@@ -1,0 +1,19 @@
+# requirements.txt
+fastapi
+uvicorn[standard]
+
+sqlmodel
+
+python-multipart
+aiofiles
+
+python-jose[cryptography]
+passlib[bcrypt]
+cryptography
+
+pydantic
+pydantic-settings
+
+python-dotenv
+phonenumbers
+click
