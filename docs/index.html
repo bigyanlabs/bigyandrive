@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drive API Documentation</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.27.0/swagger-ui.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8fafc;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .nav-tabs {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .nav-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-tab {
+            flex-shrink: 0;
+            padding: 1rem 2rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .nav-tab:hover {
+            background: #f7fafc;
+            color: #667eea;
+        }
+
+        .nav-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: #f7fafc;
+        }
+
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .quick-start {
+            background: white;
+            border-radius: 12px;
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .quick-start h2 {
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .quick-start h3 {
+            color: #4a5568;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .quick-start ol {
+            margin: 1.5rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .quick-start li {
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        .code-block {
+            background: #1a202c;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+            line-height: 1.8;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            white-space: pre;
+            font-size: 0.9rem;
+        }
+
+        .code-block .comment {
+            color: #68d391;
+            display: block;
+        }
+
+        .code-block .method {
+            color: #f6ad55;
+            font-weight: bold;
+        }
+
+        .code-block .url {
+            color: #63b3ed;
+        }
+
+        .code-block .json {
+            color: #f687b3;
+        }
+
+        .code-block .header-line {
+            color: #a0aec0;
+        }
+
+        .endpoint-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .endpoint-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .endpoint-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .endpoint-card h3 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+
+        .endpoint-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .method {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-right: 1rem;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .method.get { background: #c6f6d5; color: #22543d; }
+        .method.post { background: #bee3f8; color: #2a4365; }
+        .method.delete { background: #fed7d7; color: #742a2a; }
+        .method.put { background: #fbb6ce; color: #702459; }
+
+        .endpoint-path {
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        #swagger-ui {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .swagger-ui .topbar {
+            display: none;
+        }
+
+        .swagger-ui .info {
+            margin: 2rem;
+        }
+
+        .swagger-ui .scheme-container {
+            background: #f7fafc;
+            border-radius: 8px;
+            margin: 1rem;
+            padding: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+
+            .quick-start {
+                padding: 1.5rem;
+            }
+
+            .endpoint-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .endpoint-card {
+                padding: 1.5rem;
+            }
+
+            .nav-tab {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 2rem 0;
+            }
+
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            .quick-start h2 {
+                font-size: 1.5rem;
+            }
+
+            .code-block {
+                padding: 1rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Drive API Documentation</h1>
+        <p>Secure file sharing platform with access control and time-limited exposures</p>
+    </div>
+
+    <div class="nav-tabs">
+        <div class="nav-container">
+            <div class="nav-tab active" onclick="showTab('overview')">Overview</div>
+            <div class="nav-tab" onclick="showTab('quickstart')">Quick Start</div>
+            <div class="nav-tab" onclick="showTab('endpoints')">Endpoints</div>
+            <div class="nav-tab" onclick="showTab('swagger')">Interactive API</div>
+            <div class="nav-tab" onclick="showTab('examples')">Examples</div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div id="overview" class="tab-content active">
+            <div class="quick-start">
+                <h2>API Overview</h2>
+                <p>The Drive API is a secure file sharing platform that allows users to upload files, create time-limited exposures, and manage access requests with advanced security features.</p>
+                
+                <h3>Key Features</h3>
+                <div class="endpoint-grid">
+                    <div class="endpoint-card">
+                        <h3>🔐 Authentication</h3>
+                        <p>Phone-based registration with secure JWT tokens. No passwords required - just your phone number and a unique login hash.</p>
+                    </div>
+                    <div class="endpoint-card">
+                        <h3>📁 File Management</h3>
+                        <p>Upload, organize, and manage files with automatic MIME type detection and secure storage.</p>
+                    </div>
+                    <div class="endpoint-card">
+                        <h3>🔗 Smart Exposures</h3>
+                        <p>Create time-limited public links with granular permissions (read-only or download).</p>
+                    </div>
+                    <div class="endpoint-card">
+                        <h3>✅ Access Control</h3>
+                        <p>Approve or deny access requests with IP tracking and automatic blacklisting for security.</p>
+                    </div>
+                </div>
+
+                <h3>User Types</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <div style="background: #f0fff4; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #38a169;">
+                        <h4 style="color: #38a169; margin-bottom: 0.5rem;">Free Users</h4>
+                        <p>• One file exposure at a time<br>• Maximum 5-minute exposure duration<br>• Basic access controls</p>
+                    </div>
+                    <div style="background: #fffaf0; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #ed8936;">
+                        <h4 style="color: #ed8936; margin-bottom: 0.5rem;">Premium Users</h4>
+                        <p>• Unlimited file exposures<br>• Up to 24-hour exposure duration<br>• Advanced analytics and controls</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="quickstart" class="tab-content">
+            <div class="quick-start">
+                <h2>Quick Start Guide</h2>
+                <p>Get your application connected to the Drive API in just a few steps:</p>
+                
+                <ol>
+                    <li><strong>Register a User:</strong> Create an account with a phone number</li>
+                    <li><strong>Authenticate:</strong> Login to receive your JWT access token</li>
+                    <li><strong>Upload Files:</strong> Store files securely in your account</li>
+                    <li><strong>Create Exposures:</strong> Generate shareable links with time limits</li>
+                    <li><strong>Manage Access:</strong> Approve or deny access requests</li>
+                </ol>
+
+                <div class="code-block"># 1. Register a new user
+POST /auth/register
+Content-Type: application/json
+
+{
+  "phone": "+918043652258"
+}
+
+# 2. Login with received login_hash
+POST /auth/login
+Content-Type: application/json
+
+{
+  "phone": "+918043652258",
+  "login_hash": "abc123def456..."
+}
+
+# 3. Upload a file
+POST /files/upload
+Authorization: Bearer your_jwt_token
+Content-Type: multipart/form-data
+
+# 4. Create exposure for sharing
+POST /expose/file
+Authorization: Bearer your_jwt_token
+Content-Type: application/json
+
+{
+  "file_id": 1,
+  "permission": "download",
+  "expires_minutes": 30
+}</div>
+
+                <h3>Base URL</h3>
+                <div class="code-block">Production: https://api.drive.example.com
+Development: http://localhost:8000</div>
+            </div>
+        </div>
+
+    
+        <div id="endpoints" class="tab-content">
+            <h2 style="margin-bottom: 2rem; color: #2d3748;">API Endpoints</h2>
+            
+            <div class="endpoint-grid">
+                <div class="endpoint-card">
+                    <h3>Authentication</h3>
+                    <div class="endpoint-item">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-path">/auth/register</span>
+                    </div>
+                    <div class="endpoint-item">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-path">/auth/login</span>
+                    </div>
+                    <p>Secure phone-based authentication system.</p>
+                </div>
+
+                <div class="endpoint-card">
+                    <h3>File Management</h3>
+                    <div class="endpoint-item">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-path">/files/upload</span>
+                    </div>
+                    <div class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-path">/files/list</span>
+                    </div>
+                    <div class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-path">/files/download/{id}</span>
+                    </div>
+                    <div class="endpoint-item">
+                        <span class="method delete">DELETE</span>
+                        <span class="endpoint-path">/files/delete</span>
+                    </div>
+                    <p>Complete file lifecycle management.</p>
+                </div>
+
+                <div class="endpoint-card">
+                    <h3>File Exposure</h3>
+                    <div class="endpoint-item">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-path">/expose/file</span>
+                    </div>
+                    <div class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-path">/expose/list</span>
+                    </div>
+                    <div class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-path">/expose/info/{hash}</span>
+                    </div>
+                    <div class="endpoint-item">
+                        <span class="method delete">DELETE</span>
+                        <span class="endpoint-path">/expose/file/{hash}</span>
+                    </div>
+                    <p>Create and manage file exposures.</p>
+                </div>
+
+                <div class="endpoint-card">
+                    <h3>Access Management</h3>
+                    <div class="endpoint-item">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-path">/access/request</span>
+                    </div>
+                    <div class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-path">/access/view/{hash}</span>
+                    </div>
+                    <div class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-path">/access/download/{hash}</span>
+                    </div>
+                    <p>Request and access shared files.</p>
+                </div>
+
+                <div class="endpoint-card">
+                    <h3>Approval System</h3>
+                    <div class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-path">/approve/pending</span>
+                    </div>
+                    <div class="endpoint-item">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-path">/approve/decision</span>
+                    </div>
+                    <div class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-path">/approve/history</span>
+                    </div>
+                    <p>Manage access requests and history.</p>
+                </div>
+
+                <div class="endpoint-card">
+                    <h3>Utilities</h3>
+                    <div class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-path">/health</span>
+                    </div>
+                    <div class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-path">/docs</span>
+                    </div>
+                    <p>System health and documentation.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="swagger" class="tab-content">
+            <div class="loading" id="swagger-loading">
+                <div class="spinner"></div>
+            </div>
+            <div id="swagger-ui"></div>
+        </div>
+
+        <div id="examples" class="tab-content">
+            <div class="quick-start">
+                <h2>Code Examples</h2>
+                
+                <h3>JavaScript/Node.js</h3>
+                <div class="code-block">// Register and login
+const registerUser = async (phone) => {
+  const response = await fetch('/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON. ify({ phone })
+  });
+  return response.json();
+};
+
+const loginUser = async (phone, loginHash) => {
+  const response = await fetch('/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, login_hash: loginHash })
+  });
+  return response.json();
+};
+
+// Upload file
+const uploadFile = async (file, token) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const response = await fetch('/files/upload', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: formData
+  });
+  return response.json();
+};</div>
+
+                <h3>Python</h3>
+                <div class="code-block">import requests
+
+# Register user
+def register_user(phone):
+    response = requests.post('/auth/register', 
+                           json={'phone': phone})
+    return response.json()
+
+# Upload file
+def upload_file(file_path, token):
+    with open(file_path, 'rb') as f:
+        files = {'file': f}
+        headers = {'Authorization': f'Bearer {token}'}
+        response = requests.post('/files/upload',
+                               files=files, headers=headers)
+    return response.json()
+
+# Create exposure
+def create_exposure(file_id, token, expires_minutes=30):
+    data = {
+        'file_id': file_id,
+        'permission': 'download',
+        'expires_minutes': expires_minutes
+    }
+    headers = {'Authorization': f'Bearer {token}'}
+    response = requests.post('/expose/file',
+                           json=data, headers=headers)
+    return response.json()</div>
+
+                <h3>cURL</h3>
+                <div class="code-block"># Register user
+curl -X POST /auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"phone": "+918043652258"}'
+
+# Login
+curl -X POST /auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"phone": "+918043652258", "login_hash": "abc123..."}'
+
+# Upload file
+curl -X POST /files/upload \
+  -H "Authorization: Bearer your_token" \
+  -F "file=@document.pdf"
+
+# Create exposure
+curl -X POST /expose/file \
+  -H "Authorization: Bearer your_token" \
+  -H "Content-Type: application/json" \
+  -d '{"file_id": 1, "permission": "download", "expires_minutes": 30}'</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-bundle.js"></script>
+    <script>
+        function showTab(tabName) {
+        
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            
+            event.target.classList.add('active');
+            
+            if (tabName === 'swagger' && !window.swaggerInitialized) {
+                initSwagger();
+            }
+        }
+
+        function initSwagger() {
+            const loading = document.getElementById('swagger-loading');
+            
+            try {
+                SwaggerUIBundle({
+                    url: './api-spec.yaml',
+                    dom_id: '#swagger-ui',
+                    deepLinking: true,
+                    presets: [
+                        SwaggerUIBundle.presets.apis,
+                        SwaggerUIBundle.presets.standalone
+                    ],
+                    plugins: [
+                        SwaggerUIBundle.plugins.DownloadUrl
+                    ],
+                    tryItOutEnabled: true,
+                    supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+                    operationsSorter: "alpha",
+                    onComplete: () => {
+                        loading.style.display = 'none';
+                        window.swaggerInitialized = true;
+                    }
+                });
+            } catch (error) {
+                loading.innerHTML = '<p style="color: #e53e3e;">Failed to load Swagger UI. Please ensure api-spec.yaml is available.</p>';
+            }
+        }
+
+        window.addEventListener('load', function() {
+            document.documentElement.style.scrollBehavior = 'smooth';
+        });
+    </script>
+</body>
+</html>

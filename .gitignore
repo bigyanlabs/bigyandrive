@@ -3,4 +3,4 @@ venv/
 storage/
 response/
 drive.db*
-*.json
+*cache/

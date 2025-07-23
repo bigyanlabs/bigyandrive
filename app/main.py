@@ -11,7 +11,8 @@ from app.api import (
     files_router,
     expose_router,
     access_router,
-    approve_router
+    approve_router,
+    health_router
 )
 
 security = HTTPBearer()
@@ -67,6 +68,7 @@ app.include_router(files_router)
 app.include_router(expose_router)
 app.include_router(access_router)
 app.include_router(approve_router)
+app.include_router(health_router)
 
 
 @app.exception_handler(500)

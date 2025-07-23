@@ -26,7 +26,6 @@ class ExposureAccess(BaseModel):
 
 class AccessRequest(BaseModel):
     exposure_hash: str = Field(..., description="Hash of the exposed file")
-    requester_ip: str = Field(..., description="IP address of requester")
 
 
 class AccessResponse(BaseModel):

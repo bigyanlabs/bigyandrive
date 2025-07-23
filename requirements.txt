@@ -17,3 +17,5 @@ pydantic-settings
 python-dotenv
 phonenumbers
 click
+
+psutil

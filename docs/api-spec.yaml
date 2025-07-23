@@ -1,0 +1,883 @@
+openapi: 3.0.3
+info:
+  title: Drive API
+  description: |
+    A secure file sharing platform that allows users to upload, expose, and manage access to their files.
+    
+    ## Features
+    - User authentication with phone numbers
+    - File upload and management
+    - Secure file exposure with time limits
+    - Access request and approval system
+    - IP-based access control and blacklisting
+    
+    ## User Types
+    - **Free Users**: Can expose one file at a time for maximum 5 minutes
+    - **Premium Users**: Can expose multiple files with custom expiration times up to 24 hours
+    
+    ## Authentication
+    Most endpoints require Bearer token authentication. Obtain tokens through the login endpoint.
+    
+  version: 1.0.0
+  contact:
+    name: Drive API Support
+    url: https://expose.tech/support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.expose.drive.tech
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Authentication Endpoints
+  /auth/register:
+    post:
+      summary: Register new user
+      description: Register a new user with a phone number. Returns a login hash that must be used for authentication.
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  type: string
+                  description: Phone number in international format
+                  example: "+918043652258"
+            examples:
+              valid_phone:
+                summary: Valid phone number
+                value:
+                  phone: "+918043652258"
+      responses:
+        '200':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User registered successfully"
+                  user_id:
+                    type: integer
+                    example: 1
+                  login_hash:
+                    type: string
+                    description: Unique hash required for login
+                    example: "abc123def456..."
+                  phone:
+                    type: string
+                    example: "+918043652258"
+        '400':
+          description: Invalid phone number format
+        '409':
+          description: User with this phone number already exists
+
+  /auth/login:
+    post:
+      summary: User login
+      description: Authenticate user with phone number and login hash obtained during registration.
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, login_hash]
+              properties:
+                phone:
+                  type: string
+                  description: Phone number used during registration
+                  example: "+918043652258"
+                login_hash:
+                  type: string
+                  description: Login hash received during registration
+                  example: "abc123def456..."
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: JWT token for API authentication
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  token_type:
+                    type: string
+                    example: "bearer"
+                  user_id:
+                    type: integer
+                    example: 1
+                  user_type:
+                    type: string
+                    enum: [free, premium]
+                    example: "free"
+                  login_hash:
+                    type: string
+                    example: "abc123def456..."
+        '401':
+          description: Invalid credentials
+        '404':
+          description: User not found
+
+  # File Management Endpoints
+  /files/upload:
+    post:
+      summary: Upload file
+      description: Upload a file to the user's storage. File size and type restrictions apply based on user type.
+      tags: [File Management]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to upload
+      responses:
+        '200':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  original_name:
+                    type: string
+                    example: "document.pdf"
+                  file_size:
+                    type: integer
+                    description: File size in bytes
+                    example: 1048576
+                  mime_type:
+                    type: string
+                    example: "application/pdf"
+                  uploaded_at:
+                    type: string
+                    format: date-time
+                    example: "2025-01-22T10:30:00Z"
+                  user_id:
+                    type: integer
+                    example: 1
+        '400':
+          description: Invalid filename or file format
+        '413':
+          description: File size exceeds maximum limit
+        '401':
+          description: Authentication required
+
+  /files/list:
+    get:
+      summary: List user files
+      description: Retrieve a paginated list of files uploaded by the authenticated user.
+      tags: [File Management]
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of files to return
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          description: Number of files to skip
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Files retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        original_name:
+                          type: string
+                        file_size:
+                          type: integer
+                        mime_type:
+                          type: string
+                        uploaded_at:
+                          type: string
+                          format: date-time
+                        status:
+                          type: string
+                          enum: [uploaded, exposed, deleted]
+                  total:
+                    type: integer
+                    description: Total number of files
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+
+  /files/download/{file_id}:
+    get:
+      summary: Download file
+      description: Download a file owned by the authenticated user.
+      tags: [File Management]
+      parameters:
+        - name: file_id
+          in: path
+          required: true
+          description: ID of the file to download
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: File content
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: File not found
+        '401':
+          description: Authentication required
+
+  /files/delete:
+    delete:
+      summary: Delete file
+      description: Permanently delete a file from user's storage.
+      tags: [File Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file_id]
+              properties:
+                file_id:
+                  type: integer
+                  description: ID of the file to delete
+                  example: 1
+      responses:
+        '200':
+          description: File deleted successfully
+        '404':
+          description: File not found
+        '401':
+          description: Authentication required
+
+  # File Exposure Endpoints
+  /expose/file:
+    post:
+      summary: Expose file for sharing
+      description: |
+        Create a public exposure for a file that others can request access to.
+        
+        **User Type Limitations:**
+        - Free users: Maximum 5 minutes exposure, one file at a time
+        - Premium users: Up to 24 hours exposure, unlimited files
+      tags: [File Exposure]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file_id, permission]
+              properties:
+                file_id:
+                  type: integer
+                  description: ID of the file to expose
+                  example: 1
+                permission:
+                  type: string
+                  enum: [read_only, download]
+                  description: Access permission level
+                  example: "download"
+                expires_minutes:
+                  type: integer
+                  description: |
+                    Expiration time in minutes.
+                    - Free users: 1-5 minutes (default: 5)
+                    - Premium users: 1-1440 minutes (default: no expiry)
+                  minimum: 1
+                  maximum: 1440
+                  example: 30
+      responses:
+        '200':
+          description: File exposed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  exposure_hash:
+                    type: string
+                    description: Unique hash for accessing the exposed file
+                    example: "abc123def456..."
+                  file_id:
+                    type: integer
+                    example: 1
+                  permission:
+                    type: string
+                    example: "download"
+                  exposure_type:
+                    type: string
+                    enum: [free, premium]
+                    example: "free"
+                  expires_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+                    example: "2025-01-22T10:35:00Z"
+                  is_active:
+                    type: boolean
+                    example: true
+                  created_at:
+                    type: string
+                    format: date-time
+                    example: "2025-01-22T10:30:00Z"
+        '400':
+          description: Invalid request or free user limitations exceeded
+        '403':
+          description: Free users can only expose one file at a time
+        '404':
+          description: File not found
+
+  /expose/list:
+    get:
+      summary: List user's exposures
+      description: Retrieve all active file exposures created by the authenticated user.
+      tags: [File Exposure]
+      responses:
+        '200':
+          description: Exposures retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exposures:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        exposure_hash:
+                          type: string
+                        file_id:
+                          type: integer
+                        file_name:
+                          type: string
+                        permission:
+                          type: string
+                        exposure_type:
+                          type: string
+                        expires_at:
+                          type: string
+                          format: date-time
+                          nullable: true
+                        created_at:
+                          type: string
+                          format: date-time
+                  total:
+                    type: integer
+
+  /expose/info/{exposure_hash}:
+    get:
+      summary: Get exposure information
+      description: Get public information about an exposed file. No authentication required.
+      tags: [File Exposure]
+      security: []
+      parameters:
+        - name: exposure_hash
+          in: path
+          required: true
+          description: Hash of the exposed file
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Exposure information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  file_name:
+                    type: string
+                    example: "document.pdf"
+                  file_size:
+                    type: integer
+                    example: 1048576
+                  permission:
+                    type: string
+                    example: "download"
+                  exposure_type:
+                    type: string
+                    example: "free"
+                  expires_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+                    example: "2025-01-22T10:35:00Z"
+        '404':
+          description: Exposure not found
+        '410':
+          description: Exposure has expired
+
+  /expose/file/{exposure_hash}:
+    delete:
+      summary: Stop file exposure
+      description: Deactivate an active file exposure, making it no longer accessible.
+      tags: [File Exposure]
+      parameters:
+        - name: exposure_hash
+          in: path
+          required: true
+          description: Hash of the exposure to stop
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Exposure stopped successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Exposure stopped successfully"
+                  exposure_hash:
+                    type: string
+        '404':
+          description: Exposure not found or already stopped
+
+  # Access Request Endpoints
+  /access/request:
+    post:
+      summary: Request access to exposed file
+      description: |
+        Request access to an exposed file. No authentication required.
+        
+        **Access Flow:**
+        - Premium exposures: Immediate access granted
+        - Free exposures: Requires owner approval
+      tags: [Access Management]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [exposure_hash]
+              properties:
+                exposure_hash:
+                  type: string
+                  description: Hash of the exposed file
+                  example: "abc123def456..."
+          examples:
+            valid_request:
+              summary: Valid access request
+              value:
+                exposure_hash: "c77d2ac3d706bfbf3c133fdeb8399eb415b7f200969a081071762a7bd1690364"
+      responses:
+        '200':
+          description: Access request processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_granted:
+                    type: boolean
+                    description: Whether immediate access was granted
+                  message:
+                    type: string
+                    example: "Access request sent to file owner for approval"
+                  file_name:
+                    type: string
+                    nullable: true
+                    description: File name (only if access granted)
+                  file_size:
+                    type: integer
+                    nullable: true
+                    description: File size (only if access granted)
+                  permission:
+                    type: string
+                    nullable: true
+                    description: Permission level (only if access granted)
+        '404':
+          description: Exposure not found or expired
+        '403':
+          description: IP address is blacklisted
+
+  /access/view/{exposure_hash}:
+    get:
+      summary: View file information
+      description: |
+        View information about an exposed file. Requires approved access for free exposures.
+        No authentication required, but access must be approved.
+      tags: [Access Management]
+      security: []
+      parameters:
+        - name: exposure_hash
+          in: path
+          required: true
+          description: Hash of the exposed file
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  file_name:
+                    type: string
+                    example: "document.pdf"
+                  file_size:
+                    type: integer
+                    example: 1048576
+                  mime_type:
+                    type: string
+                    example: "application/pdf"
+                  permission:
+                    type: string
+                    example: "download"
+                  uploaded_at:
+                    type: string
+                    format: date-time
+        '403':
+          description: Access not approved or permission denied
+        '404':
+          description: Exposure not found
+
+  /access/download/{exposure_hash}:
+    get:
+      summary: Download exposed file
+      description: |
+        Download an exposed file. Requires download permission and approved access for free exposures.
+        No authentication required, but access must be approved.
+      tags: [Access Management]
+      security: []
+      parameters:
+        - name: exposure_hash
+          in: path
+          required: true
+          description: Hash of the exposed file
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File content
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '403':
+          description: Access not approved or download not permitted
+        '404':
+          description: Exposure or file not found
+
+  # Approval Management Endpoints
+  /approve/pending:
+    get:
+      summary: Get pending access requests
+      description: Retrieve all pending access requests for files owned by the authenticated user.
+      tags: [Approval Management]
+      responses:
+        '200':
+          description: Pending requests retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pending_requests:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: Access request ID
+                        exposure_hash:
+                          type: string
+                        requester_ip:
+                          type: string
+                        user_agent:
+                          type: string
+                          nullable: true
+                        created_at:
+                          type: string
+                          format: date-time
+                        file_name:
+                          type: string
+                          description: Name of the requested file
+                  total:
+                    type: integer
+
+  /approve/decision:
+    post:
+      summary: Approve or deny access request
+      description: Make a decision on a pending access request.
+      tags: [Approval Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [access_id, approved]
+              properties:
+                access_id:
+                  type: integer
+                  description: ID of the access request to decide on
+                  example: 1
+                approved:
+                  type: boolean
+                  description: Whether to approve or deny the request
+                  example: true
+      responses:
+        '200':
+          description: Decision recorded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Access request approved successfully"
+                  access_id:
+                    type: integer
+                  status:
+                    type: string
+                    enum: [approved, denied]
+        '404':
+          description: Access request not found
+
+  /approve/bulk-decision:
+    post:
+      summary: Bulk approve or deny requests
+      description: Approve or deny multiple access requests at once.
+      tags: [Approval Management]
+      parameters:
+        - name: approved
+          in: query
+          required: true
+          description: Whether to approve or deny all requests
+          schema:
+            type: boolean
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+                description: Access request ID
+              example: [1, 2, 3]
+      responses:
+        '200':
+          description: Bulk decision processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  processed_count:
+                    type: integer
+                  status:
+                    type: string
+
+  /approve/history:
+    get:
+      summary: Get access history
+      description: Retrieve the history of all access requests for files owned by the authenticated user.
+      tags: [Approval Management]
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of records to return
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          description: Number of records to skip
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Access history retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  history:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        exposure_hash:
+                          type: string
+                        requester_ip:
+                          type: string
+                        user_agent:
+                          type: string
+                          nullable: true
+                        status:
+                          type: string
+                          enum: [pending, approved, denied]
+                        created_at:
+                          type: string
+                          format: date-time
+                        accessed_at:
+                          type: string
+                          format: date-time
+                          nullable: true
+                        file_name:
+                          type: string
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+
+  /approve/clear-denied:
+    delete:
+      summary: Clear denied requests
+      description: Remove all denied access requests from the history.
+      tags: [Approval Management]
+      responses:
+        '200':
+          description: Denied requests cleared
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Cleared 5 denied access requests"
+                  deleted_count:
+                    type: integer
+
+  # Utility Endpoints
+  /health:
+    get:
+      summary: Health check
+      description: Check if the API is running and healthy.
+      tags: [Utility]
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from the login endpoint
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code
+      required:
+        - detail
+    FileInfo:
+      type: object
+      properties:
+        id:
+          type: integer
+        original_name:
+          type: string
+        file_size:
+          type: integer
+
+tags:
+  - name: Authentication
+    description: User registration and login operations
+  - name: File Management
+    description: Upload, download, and manage files
+  - name: File Exposure
+    description: Create and manage file exposures for sharing
+  - name: Access Management
+    description: Request and manage access to exposed files
+  - name: Approval Management
+    description: Approve or deny access requests
+  - name: Utility
+    description: Health checks and system information

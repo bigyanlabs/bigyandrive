@@ -5,6 +5,7 @@ from sqlmodel import Session, select
 from typing import Annotated
 import mimetypes
 import os
+import urllib.parse
 
 from app.database import get_session
 from app.models import File as FileModel, FileStatus, User
@@ -203,16 +204,41 @@ async def download_file(
             detail="File not found in storage"
         )
     
+    mime_type = file_record.mime_type
+    if not mime_type:
+        mime_type, _ = mimetypes.guess_type(file_record.original_name)
+        if not mime_type:
+            mime_type = 'application/octet-stream'
+    
+    safe_filename = urllib.parse.quote(file_record.original_name)
+    
     def file_generator():
-        with open(file_path, "rb") as file:
-            while chunk := file.read(8 * 1024 * 1024):  # 8MB chunks
-                yield chunk
+        try:
+            with open(file_path, "rb") as file:
+                while True:
+                    chunk = file.read(1024 * 1024)  # 1MB chunks (smaller for better memory usage)
+                    if not chunk:
+                        break
+                    yield chunk
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error reading file: {str(e)}"
+            )
+    
+    # Proper headers to prevent corruption
+    headers = {
+        "Content-Disposition": f'attachment; filename*=UTF-8\'\'{safe_filename}',
+        "Content-Type": mime_type,
+        "Content-Length": str(file_record.file_size),
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
+        "Accept-Ranges": "bytes"
+    }
     
     return StreamingResponse(
         file_generator(),
-        media_type=file_record.mime_type,
-        headers={
-            "Content-Disposition": f'attachment; filename="{file_record.original_name}"',
-            "Content-Length": str(file_record.file_size)
-        }
+        media_type=mime_type,
+        headers=headers
     )
