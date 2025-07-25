@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+<!-- filepath: /home/xolo/Programming/Drive/docs/index.html -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drive API Documentation</title>
-    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.27.0/swagger-ui.css" />
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui.css" />
     <style>
         * {
             margin: 0;
@@ -150,13 +151,12 @@
             font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
             line-height: 1.8;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            white-space: pre;
+            white-space: pre-wrap;
             font-size: 0.9rem;
         }
 
         .code-block .comment {
             color: #68d391;
-            display: block;
         }
 
         .code-block .method {
@@ -234,6 +234,29 @@
             font-size: 0.9rem;
         }
 
+        .premium-badge {
+            background: linear-gradient(45deg, #ed8936, #f6ad55);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 0.5rem;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: #856404;
+        }
+
+        .warning-box strong {
+            color: #d68910;
+        }
+
         #swagger-ui {
             background: white;
             border-radius: 12px;
@@ -257,57 +280,6 @@
             padding: 1rem;
         }
 
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .header p {
-                font-size: 1rem;
-            }
-
-            .content {
-                padding: 1rem;
-            }
-
-            .quick-start {
-                padding: 1.5rem;
-            }
-
-            .endpoint-grid {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-
-            .endpoint-card {
-                padding: 1.5rem;
-            }
-
-            .nav-tab {
-                padding: 0.75rem 1rem;
-                font-size: 0.9rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header {
-                padding: 2rem 0;
-            }
-
-            .header h1 {
-                font-size: 1.75rem;
-            }
-
-            .quick-start h2 {
-                font-size: 1.5rem;
-            }
-
-            .code-block {
-                padding: 1rem;
-                font-size: 0.85rem;
-            }
-        }
-
         .loading {
             display: flex;
             justify-content: center;
@@ -328,12 +300,30 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2rem; }
+            .header p { font-size: 1rem; }
+            .content { padding: 1rem; }
+            .quick-start { padding: 1.5rem; }
+            .endpoint-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .endpoint-card { padding: 1.5rem; }
+            .nav-tab { padding: 0.75rem 1rem; font-size: 0.9rem; }
+        }
+
+        @media (max-width: 480px) {
+            .header { padding: 2rem 0; }
+            .header h1 { font-size: 1.75rem; }
+            .quick-start h2 { font-size: 1.5rem; }
+            .code-block { padding: 1rem; font-size: 0.85rem; }
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>Drive API Documentation</h1>
-        <p>Secure file sharing platform with access control and time-limited exposures</p>
+        <p>Secure file sharing platform with access control and premium phone-based sharing</p>
     </div>
 
     <div class="nav-tabs">
@@ -341,12 +331,14 @@
             <div class="nav-tab active" onclick="showTab('overview')">Overview</div>
             <div class="nav-tab" onclick="showTab('quickstart')">Quick Start</div>
             <div class="nav-tab" onclick="showTab('endpoints')">Endpoints</div>
+            <div class="nav-tab" onclick="showTab('premium')">Premium Features</div>
             <div class="nav-tab" onclick="showTab('swagger')">Interactive API</div>
             <div class="nav-tab" onclick="showTab('examples')">Examples</div>
         </div>
     </div>
 
     <div class="content">
+        <!-- Overview Tab -->
         <div id="overview" class="tab-content active">
             <div class="quick-start">
                 <h2>API Overview</h2>
@@ -370,67 +362,95 @@
                         <h3>✅ Access Control</h3>
                         <p>Approve or deny access requests with IP tracking and automatic blacklisting for security.</p>
                     </div>
+                    <div class="endpoint-card">
+                        <h3>👑 Premium Sharing</h3>
+                        <p>Phone-based sharing with secure tokens, download limits, and advanced recipient management.</p>
+                    </div>
+                    <div class="endpoint-card">
+                        <h3>⚡ Health Monitoring</h3>
+                        <p>System health checks and API status monitoring for reliable service operation.</p>
+                    </div>
                 </div>
 
                 <h3>User Types</h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
                     <div style="background: #f0fff4; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #38a169;">
                         <h4 style="color: #38a169; margin-bottom: 0.5rem;">Free Users</h4>
-                        <p>• One file exposure at a time<br>• Maximum 5-minute exposure duration<br>• Basic access controls</p>
+                        <p>• One file exposure at a time<br>• Maximum 5-minute exposure duration<br>• IP-based access control<br>• Manual approval system</p>
                     </div>
                     <div style="background: #fffaf0; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #ed8936;">
                         <h4 style="color: #ed8936; margin-bottom: 0.5rem;">Premium Users</h4>
-                        <p>• Unlimited file exposures<br>• Up to 24-hour exposure duration<br>• Advanced analytics and controls</p>
+                        <p>• Unlimited file exposures<br>• Up to 24-hour exposure duration<br>• Phone-based sharing<br>• Secure token system<br>• Download limits per recipient</p>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Quick Start Tab -->
         <div id="quickstart" class="tab-content">
             <div class="quick-start">
                 <h2>Quick Start Guide</h2>
                 <p>Get your application connected to the Drive API in just a few steps:</p>
+                
+                <div class="warning-box">
+                    <strong>⚠️ File Download Testing:</strong> 
+                    File download endpoints should not be tested directly in Swagger UI as it may corrupt binary files. 
+                    Use a proper HTTP client (Postman, curl, or browser) for downloading files.
+                </div>
                 
                 <ol>
                     <li><strong>Register a User:</strong> Create an account with a phone number</li>
                     <li><strong>Authenticate:</strong> Login to receive your JWT access token</li>
                     <li><strong>Upload Files:</strong> Store files securely in your account</li>
                     <li><strong>Create Exposures:</strong> Generate shareable links with time limits</li>
-                    <li><strong>Manage Access:</strong> Approve or deny access requests</li>
+                    <li><strong>Manage Access:</strong> Approve or deny access requests (free) or share directly (premium)</li>
                 </ol>
 
-                <div class="code-block"># 1. Register a new user
-POST /auth/register
-Content-Type: application/json
+                <div class="code-block"><span class="comment"># 1. Register a new user</span>
+<span class="method">POST</span> <span class="url">/auth/register</span>
+<span class="header-line">Content-Type: application/json</span>
 
-{
+<span class="json">{
   "phone": "+918043652258"
-}
+}</span>
 
-# 2. Login with received login_hash
-POST /auth/login
-Content-Type: application/json
+<span class="comment"># 2. Login with received login_hash</span>
+<span class="method">POST</span> <span class="url">/auth/login</span>
+<span class="header-line">Content-Type: application/json</span>
 
-{
+<span class="json">{
   "phone": "+918043652258",
   "login_hash": "abc123def456..."
-}
+}</span>
 
-# 3. Upload a file
-POST /files/upload
-Authorization: Bearer your_jwt_token
-Content-Type: multipart/form-data
+<span class="comment"># 3. Upload a file</span>
+<span class="method">POST</span> <span class="url">/files/upload</span>
+<span class="header-line">Authorization: Bearer your_jwt_token</span>
+<span class="header-line">Content-Type: multipart/form-data</span>
 
-# 4. Create exposure for sharing
-POST /expose/file
-Authorization: Bearer your_jwt_token
-Content-Type: application/json
+<span class="comment"># 4. Create exposure for sharing (Free users)</span>
+<span class="method">POST</span> <span class="url">/expose/file</span>
+<span class="header-line">Authorization: Bearer your_jwt_token</span>
+<span class="header-line">Content-Type: application/json</span>
 
-{
+<span class="json">{
   "file_id": 1,
   "permission": "download",
-  "expires_minutes": 30
-}</div>
+  "expires_minutes": 5
+}</span>
+
+<span class="comment"># 5. Create premium exposure (Premium users)</span>
+<span class="method">POST</span> <span class="url">/premium/expose</span>
+<span class="header-line">Authorization: Bearer your_jwt_token</span>
+<span class="header-line">Content-Type: application/json</span>
+
+<span class="json">{
+  "file_id": 1,
+  "permission": "download",
+  "expires_minutes": 1440,
+  "shared_with_phones": ["+918043652258", "+919876543210"],
+  "max_downloads_per_recipient": 3
+}</span></div>
 
                 <h3>Base URL</h3>
                 <div class="code-block">Production: https://api.drive.example.com
@@ -438,7 +458,7 @@ Development: http://localhost:8000</div>
             </div>
         </div>
 
-    
+        <!-- Endpoints Tab -->
         <div id="endpoints" class="tab-content">
             <h2 style="margin-bottom: 2rem; color: #2d3748;">API Endpoints</h2>
             
@@ -453,7 +473,11 @@ Development: http://localhost:8000</div>
                         <span class="method post">POST</span>
                         <span class="endpoint-path">/auth/login</span>
                     </div>
-                    <p>Secure phone-based authentication system.</p>
+                    <div class="endpoint-item">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-path">/auth/upgrade-premium</span>
+                    </div>
+                    <p>Secure phone-based authentication system with premium upgrades.</p>
                 </div>
 
                 <div class="endpoint-card">
@@ -474,11 +498,11 @@ Development: http://localhost:8000</div>
                         <span class="method delete">DELETE</span>
                         <span class="endpoint-path">/files/delete</span>
                     </div>
-                    <p>Complete file lifecycle management.</p>
+                    <p>Complete file lifecycle management with secure storage.</p>
                 </div>
 
                 <div class="endpoint-card">
-                    <h3>File Exposure</h3>
+                    <h3>File Exposure (Free)</h3>
                     <div class="endpoint-item">
                         <span class="method post">POST</span>
                         <span class="endpoint-path">/expose/file</span>
@@ -495,7 +519,7 @@ Development: http://localhost:8000</div>
                         <span class="method delete">DELETE</span>
                         <span class="endpoint-path">/expose/file/{hash}</span>
                     </div>
-                    <p>Create and manage file exposures.</p>
+                    <p>Create and manage file exposures for free users.</p>
                 </div>
 
                 <div class="endpoint-card">
@@ -512,7 +536,7 @@ Development: http://localhost:8000</div>
                         <span class="method get">GET</span>
                         <span class="endpoint-path">/access/download/{hash}</span>
                     </div>
-                    <p>Request and access shared files.</p>
+                    <p>Request and access shared files with IP tracking.</p>
                 </div>
 
                 <div class="endpoint-card">
@@ -529,11 +553,11 @@ Development: http://localhost:8000</div>
                         <span class="method get">GET</span>
                         <span class="endpoint-path">/approve/history</span>
                     </div>
-                    <p>Manage access requests and history.</p>
+                    <p>Manage access requests and approval history.</p>
                 </div>
 
                 <div class="endpoint-card">
-                    <h3>Utilities</h3>
+                    <h3>System Health</h3>
                     <div class="endpoint-item">
                         <span class="method get">GET</span>
                         <span class="endpoint-path">/health</span>
@@ -542,11 +566,115 @@ Development: http://localhost:8000</div>
                         <span class="method get">GET</span>
                         <span class="endpoint-path">/docs</span>
                     </div>
-                    <p>System health and documentation.</p>
+                    <div class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-path">/redoc</span>
+                    </div>
+                    <p>System health monitoring and API documentation.</p>
                 </div>
             </div>
         </div>
 
+        <!-- Premium Features Tab -->
+        <div id="premium" class="tab-content">
+            <div class="quick-start">
+                <h2>Premium Features <span class="premium-badge">PREMIUM</span></h2>
+                <p>Premium users get advanced sharing capabilities with phone-based access control and secure token systems.</p>
+                
+                <h3>Premium Endpoints</h3>
+                <div class="endpoint-grid">
+                    <div class="endpoint-card">
+                        <h3>Premium Exposure <span class="premium-badge">PREMIUM</span></h3>
+                        <div class="endpoint-item">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-path">/premium/expose</span>
+                        </div>
+                        <div class="endpoint-item">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-path">/premium/exposures</span>
+                        </div>
+                        <p>Create exposures with phone-based sharing and download limits.</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <h3>Recipient Management <span class="premium-badge">PREMIUM</span></h3>
+                        <div class="endpoint-item">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-path">/premium/share/add</span>
+                        </div>
+                        <div class="endpoint-item">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-path">/premium/share/revoke</span>
+                        </div>
+                        <p>Add or remove recipients from existing exposures.</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <h3>Premium Access <span class="premium-badge">PREMIUM</span></h3>
+                        <div class="endpoint-item">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-path">/premium/access/{token}</span>
+                        </div>
+                        <div class="endpoint-item">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-path">/premium/download/{token}</span>
+                        </div>
+                        <p>Token-based file access with phone verification.</p>
+                    </div>
+                </div>
+
+                <h3>Premium Sharing Example</h3>
+                <div class="code-block"><span class="comment"># 1. Upgrade to premium</span>
+<span class="method">POST</span> <span class="url">/auth/upgrade-premium</span>
+<span class="header-line">Authorization: Bearer your_jwt_token</span>
+
+<span class="comment"># 2. Create premium exposure</span>
+<span class="method">POST</span> <span class="url">/premium/expose</span>
+<span class="header-line">Authorization: Bearer your_jwt_token</span>
+<span class="header-line">Content-Type: application/json</span>
+
+<span class="json">{
+  "file_id": 1,
+  "permission": "download",
+  "expires_minutes": 720,
+  "shared_with_phones": ["+918043652258", "+919876543210"],
+  "max_downloads_per_recipient": 5
+}</span>
+
+<span class="comment"># 3. Recipients access with token + phone</span>
+<span class="method">GET</span> <span class="url">/premium/access/{access_token}?phone=+918043652258</span>
+
+<span class="comment"># 4. Download with token + phone verification</span>
+<span class="method">GET</span> <span class="url">/premium/download/{access_token}?phone=+918043652258</span></div>
+
+                <h3>Premium vs Free Comparison</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0;">
+                    <div style="background: #f0fff4; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #38a169;">
+                        <h4 style="color: #38a169; margin-bottom: 1rem;">Free Users</h4>
+                        <ul style="list-style-type: disc; padding-left: 1.5rem;">
+                            <li>One exposure at a time</li>
+                            <li>5-minute maximum duration</li>
+                            <li>IP-based access control</li>
+                            <li>Manual approval required</li>
+                            <li>Public exposure hashes</li>
+                        </ul>
+                    </div>
+                    <div style="background: #fffaf0; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #ed8936;">
+                        <h4 style="color: #ed8936; margin-bottom: 1rem;">Premium Users</h4>
+                        <ul style="list-style-type: disc; padding-left: 1.5rem;">
+                            <li>Unlimited exposures</li>
+                            <li>Up to 24-hour duration</li>
+                            <li>Phone-based sharing</li>
+                            <li>Immediate access with tokens</li>
+                            <li>Download limits per recipient</li>
+                            <li>Recipient management</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Swagger Tab -->
         <div id="swagger" class="tab-content">
             <div class="loading" id="swagger-loading">
                 <div class="spinner"></div>
@@ -554,17 +682,18 @@ Development: http://localhost:8000</div>
             <div id="swagger-ui"></div>
         </div>
 
+        <!-- Examples Tab -->
         <div id="examples" class="tab-content">
             <div class="quick-start">
                 <h2>Code Examples</h2>
                 
                 <h3>JavaScript/Node.js</h3>
-                <div class="code-block">// Register and login
+                <div class="code-block"><span class="comment">// Register and login</span>
 const registerUser = async (phone) => {
   const response = await fetch('/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON. ify({ phone })
+    body: JSON.stringify({ phone })
   });
   return response.json();
 };
@@ -578,70 +707,103 @@ const loginUser = async (phone, loginHash) => {
   return response.json();
 };
 
-// Upload file
-const uploadFile = async (file, token) => {
-  const formData = new FormData();
-  formData.append('file', file);
-  
-  const response = await fetch('/files/upload', {
+<span class="comment">// Premium: Create phone-based exposure</span>
+const createPremiumExposure = async (fileId, phones, token) => {
+  const response = await fetch('/premium/expose', {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` },
-    body: formData
+    headers: { 
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json' 
+    },
+    body: JSON.stringify({
+      file_id: fileId,
+      permission: 'download',
+      expires_minutes: 720,
+      shared_with_phones: phones,
+      max_downloads_per_recipient: 3
+    })
   });
+  return response.json();
+};
+
+<span class="comment">// Premium: Access file with token</span>
+const accessPremiumFile = async (accessToken, phone) => {
+  const response = await fetch(
+    `/premium/access/${accessToken}?phone=${encodeURIComponent(phone)}`
+  );
   return response.json();
 };</div>
 
                 <h3>Python</h3>
                 <div class="code-block">import requests
 
-# Register user
+<span class="comment"># Register user</span>
 def register_user(phone):
     response = requests.post('/auth/register', 
                            json={'phone': phone})
     return response.json()
 
-# Upload file
-def upload_file(file_path, token):
-    with open(file_path, 'rb') as f:
-        files = {'file': f}
-        headers = {'Authorization': f'Bearer {token}'}
-        response = requests.post('/files/upload',
-                               files=files, headers=headers)
+<span class="comment"># Upgrade to premium</span>
+def upgrade_to_premium(token):
+    headers = {'Authorization': f'Bearer {token}'}
+    response = requests.post('/auth/upgrade-premium', headers=headers)
     return response.json()
 
-# Create exposure
-def create_exposure(file_id, token, expires_minutes=30):
+<span class="comment"># Create premium exposure</span>
+def create_premium_exposure(file_id, phones, token):
     data = {
         'file_id': file_id,
         'permission': 'download',
-        'expires_minutes': expires_minutes
+        'expires_minutes': 720,
+        'shared_with_phones': phones,
+        'max_downloads_per_recipient': 5
     }
     headers = {'Authorization': f'Bearer {token}'}
-    response = requests.post('/expose/file',
+    response = requests.post('/premium/expose',
                            json=data, headers=headers)
+    return response.json()
+
+<span class="comment"># Access premium file</span>
+def access_premium_file(access_token, phone):
+    params = {'phone': phone}
+    response = requests.get(f'/premium/access/{access_token}',
+                          params=params)
     return response.json()</div>
 
                 <h3>cURL</h3>
-                <div class="code-block"># Register user
+                <div class="code-block"><span class="comment"># Register user</span>
 curl -X POST /auth/register \
   -H "Content-Type: application/json" \
   -d '{"phone": "+918043652258"}'
 
-# Login
-curl -X POST /auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"phone": "+918043652258", "login_hash": "abc123..."}'
+<span class="comment"># Upgrade to premium</span>
+curl -X POST /auth/upgrade-premium \
+  -H "Authorization: Bearer your_token"
 
-# Upload file
-curl -X POST /files/upload \
-  -H "Authorization: Bearer your_token" \
-  -F "file=@document.pdf"
-
-# Create exposure
-curl -X POST /expose/file \
+<span class="comment"># Create premium exposure</span>
+curl -X POST /premium/expose \
   -H "Authorization: Bearer your_token" \
   -H "Content-Type: application/json" \
-  -d '{"file_id": 1, "permission": "download", "expires_minutes": 30}'</div>
+  -d '{
+    "file_id": 1,
+    "permission": "download", 
+    "expires_minutes": 720,
+    "shared_with_phones": ["+918043652258", "+919876543210"],
+    "max_downloads_per_recipient": 3
+  }'
+
+<span class="comment"># Access premium file</span>
+curl -X GET "/premium/access/abc123...?phone=%2B918043652258"
+
+<span class="comment"># Add recipient to existing exposure</span>
+curl -X POST /premium/share/add \
+  -H "Authorization: Bearer your_token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "exposure_hash": "abc123...",
+    "phone": "+919999999999",
+    "max_downloads": 2
+  }'</div>
             </div>
         </div>
     </div>
@@ -649,7 +811,6 @@ curl -X POST /expose/file \
     <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-bundle.js"></script>
     <script>
         function showTab(tabName) {
-        
             const tabContents = document.querySelectorAll('.tab-content');
             tabContents.forEach(content => content.classList.remove('active'));
             
@@ -657,7 +818,6 @@ curl -X POST /expose/file \
             tabs.forEach(tab => tab.classList.remove('active'));
             
             document.getElementById(tabName).classList.add('active');
-            
             event.target.classList.add('active');
             
             if (tabName === 'swagger' && !window.swaggerInitialized) {
@@ -681,15 +841,27 @@ curl -X POST /expose/file \
                         SwaggerUIBundle.plugins.DownloadUrl
                     ],
                     tryItOutEnabled: true,
-                    supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+                    supportedSubmitMethods: ['get', 'post', 'delete', 'patch'],
                     operationsSorter: "alpha",
+                    requestInterceptor: (request) => {
+                        if (request.url.includes('/download/')) {
+                            alert('File downloads should be tested outside of Swagger UI to prevent corruption. Use Postman, curl, or your browser instead.');
+                            return Promise.reject('File download blocked in Swagger UI');
+                        }
+                        return request;
+                    },
                     onComplete: () => {
                         loading.style.display = 'none';
                         window.swaggerInitialized = true;
+                    },
+                    onFailure: (error) => {
+                        loading.innerHTML = '<p style="color: #e53e3e;">Failed to load API specification. Please ensure api-spec.yaml is available.</p>';
+                        console.error('Swagger UI failed to load:', error);
                     }
                 });
             } catch (error) {
-                loading.innerHTML = '<p style="color: #e53e3e;">Failed to load Swagger UI. Please ensure api-spec.yaml is available.</p>';
+                loading.innerHTML = '<p style="color: #e53e3e;">Failed to initialize Swagger UI.</p>';
+                console.error('Swagger initialization error:', error);
             }
         }
 

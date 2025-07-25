@@ -25,3 +25,6 @@ class Exposure(SQLModel, table=True):
     is_active: bool = Field(default=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    premium_token: Optional[str] = Field(default=None, unique=True, index=True)
+    shared_with_phones: Optional[str] = Field(default=None)  # JSON string of phone numbers
+    max_downloads_per_recipient: Optional[int] = Field(default=None)

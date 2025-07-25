@@ -59,6 +59,16 @@ def verify_token(token: str) -> Optional[dict]:
         return None
 
 
-def generate_premium_token() -> str:
-    """Generate secure token for premium sharing"""
-    return secrets.token_urlsafe(32)
+def generate_premium_share_token(phone: str, exposure_hash: str) -> str:
+    """Generate secure token for premium phone-based sharing"""
+    timestamp = str(datetime.now(timezone.utc).timestamp())
+    data_string = f"{phone}:{exposure_hash}:{timestamp}:{secrets.token_hex(16)}"
+    return hashlib.sha256(data_string.encode()).hexdigest()
+
+
+def verify_premium_token_format(token: str) -> bool:
+    """Verify premium share token format is valid"""
+    try:
+        return len(token) == 64 and all(c in '0123456789abcdef' for c in token)
+    except:
+        return False

@@ -146,3 +146,29 @@ async def get_current_user(
         )
     
     return user
+
+@router.post("/upgrade-premium", response_model=dict)
+async def upgrade_to_premium(
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_session)]
+) -> dict:
+    """Upgrade user to premium (for testing purposes)"""
+    from datetime import datetime, timezone
+    
+    if current_user.user_type == UserType.PREMIUM:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is already premium"
+        )
+    
+    current_user.user_type = UserType.PREMIUM
+    current_user.updated_at = datetime.now(timezone.utc)
+    
+    session.add(current_user)
+    session.commit()
+    
+    return {
+        "message": "Successfully upgraded to premium",
+        "user_type": current_user.user_type.value,
+        "phone": current_user.phone
+    }

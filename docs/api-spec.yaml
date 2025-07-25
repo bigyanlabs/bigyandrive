@@ -10,10 +10,11 @@ info:
     - Secure file exposure with time limits
     - Access request and approval system
     - IP-based access control and blacklisting
+    - Premium phone-based sharing with secure tokens
     
     ## User Types
     - **Free Users**: Can expose one file at a time for maximum 5 minutes
-    - **Premium Users**: Can expose multiple files with custom expiration times up to 24 hours
+    - **Premium Users**: Can expose multiple files with custom expiration times up to 24 hours, phone-based sharing
     
     ## Authentication
     Most endpoints require Bearer token authentication. Obtain tokens through the login endpoint.
@@ -36,7 +37,6 @@ security:
   - BearerAuth: []
 
 paths:
-  # Authentication Endpoints
   /auth/register:
     post:
       summary: Register new user
@@ -83,8 +83,16 @@ paths:
                     example: "+918043652258"
         '400':
           description: Invalid phone number format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '409':
           description: User with this phone number already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /auth/login:
     post:
@@ -135,8 +143,45 @@ paths:
                     example: "abc123def456..."
         '401':
           description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/upgrade-premium:
+    post:
+      summary: Upgrade to premium
+      description: Upgrade current user to premium (for testing purposes)
+      tags: [Authentication]
+      responses:
+        '200':
+          description: Successfully upgraded to premium
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Successfully upgraded to premium"
+                  user_type:
+                    type: string
+                    example: "premium"
+                  phone:
+                    type: string
+                    example: "+918043652258"
+        '400':
+          description: User is already premium
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   # File Management Endpoints
   /files/upload:
@@ -162,34 +207,25 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    example: 1
-                  original_name:
-                    type: string
-                    example: "document.pdf"
-                  file_size:
-                    type: integer
-                    description: File size in bytes
-                    example: 1048576
-                  mime_type:
-                    type: string
-                    example: "application/pdf"
-                  uploaded_at:
-                    type: string
-                    format: date-time
-                    example: "2025-01-22T10:30:00Z"
-                  user_id:
-                    type: integer
-                    example: 1
+                $ref: '#/components/schemas/FileInfo'
         '400':
           description: Invalid filename or file format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '413':
           description: File size exceeds maximum limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /files/list:
     get:
@@ -223,22 +259,7 @@ paths:
                   files:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        original_name:
-                          type: string
-                        file_size:
-                          type: integer
-                        mime_type:
-                          type: string
-                        uploaded_at:
-                          type: string
-                          format: date-time
-                        status:
-                          type: string
-                          enum: [uploaded, exposed, deleted]
+                      $ref: '#/components/schemas/FileInfo'
                   total:
                     type: integer
                     description: Total number of files
@@ -250,7 +271,11 @@ paths:
   /files/download/{file_id}:
     get:
       summary: Download file
-      description: Download a file owned by the authenticated user.
+      description: |
+        Download a file owned by the authenticated user.
+        
+        **Note**: This endpoint returns binary content and should not be tested directly in Swagger UI.
+        Use a proper HTTP client or browser for file downloads.
       tags: [File Management]
       parameters:
         - name: file_id
@@ -261,16 +286,40 @@ paths:
             type: integer
       responses:
         '200':
-          description: File content
+          description: File content (binary download)
           content:
-            application/octet-stream:
+            '*/*':
               schema:
                 type: string
                 format: binary
+                description: Binary file content
+          headers:
+            Content-Disposition:
+              description: Attachment with original filename
+              schema:
+                type: string
+                example: 'attachment; filename="document.pdf"'
+            Content-Type:
+              description: MIME type of the file
+              schema:
+                type: string
+                example: 'application/pdf'
+            Content-Length:
+              description: File size in bytes
+              schema:
+                type: integer
         '404':
           description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /files/delete:
     delete:
@@ -292,10 +341,28 @@ paths:
       responses:
         '200':
           description: File deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "File deleted successfully"
+                  file_id:
+                    type: integer
         '404':
           description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   # File Exposure Endpoints
   /expose/file:
@@ -340,43 +407,25 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    example: 1
-                  exposure_hash:
-                    type: string
-                    description: Unique hash for accessing the exposed file
-                    example: "abc123def456..."
-                  file_id:
-                    type: integer
-                    example: 1
-                  permission:
-                    type: string
-                    example: "download"
-                  exposure_type:
-                    type: string
-                    enum: [free, premium]
-                    example: "free"
-                  expires_at:
-                    type: string
-                    format: date-time
-                    nullable: true
-                    example: "2025-01-22T10:35:00Z"
-                  is_active:
-                    type: boolean
-                    example: true
-                  created_at:
-                    type: string
-                    format: date-time
-                    example: "2025-01-22T10:30:00Z"
+                $ref: '#/components/schemas/ExposureResponse'
         '400':
           description: Invalid request or free user limitations exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '403':
           description: Free users can only expose one file at a time
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /expose/list:
     get:
@@ -394,27 +443,7 @@ paths:
                   exposures:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        exposure_hash:
-                          type: string
-                        file_id:
-                          type: integer
-                        file_name:
-                          type: string
-                        permission:
-                          type: string
-                        exposure_type:
-                          type: string
-                        expires_at:
-                          type: string
-                          format: date-time
-                          nullable: true
-                        created_at:
-                          type: string
-                          format: date-time
+                      $ref: '#/components/schemas/ExposureResponse'
                   total:
                     type: integer
 
@@ -458,8 +487,16 @@ paths:
                     example: "2025-01-22T10:35:00Z"
         '404':
           description: Exposure not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '410':
           description: Exposure has expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /expose/file/{exposure_hash}:
     delete:
@@ -488,6 +525,10 @@ paths:
                     type: string
         '404':
           description: Exposure not found or already stopped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   # Access Request Endpoints
   /access/request:
@@ -495,6 +536,7 @@ paths:
       summary: Request access to exposed file
       description: |
         Request access to an exposed file. No authentication required.
+        The requester's IP address is automatically detected from the request.
         
         **Access Flow:**
         - Premium exposures: Immediate access granted
@@ -513,11 +555,11 @@ paths:
                   type: string
                   description: Hash of the exposed file
                   example: "abc123def456..."
-          examples:
-            valid_request:
-              summary: Valid access request
-              value:
-                exposure_hash: "c77d2ac3d706bfbf3c133fdeb8399eb415b7f200969a081071762a7bd1690364"
+            examples:
+              valid_request:
+                summary: Request access to file
+                value:
+                  exposure_hash: "c77d2ac3d706bfbf3c133fdeb8399eb415b7f200969a081071762a7bd1690364"
       responses:
         '200':
           description: Access request processed
@@ -546,8 +588,16 @@ paths:
                     description: Permission level (only if access granted)
         '404':
           description: Exposure not found or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '403':
           description: IP address is blacklisted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /access/view/{exposure_hash}:
     get:
@@ -589,8 +639,16 @@ paths:
                     format: date-time
         '403':
           description: Access not approved or permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Exposure not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /access/download/{exposure_hash}:
     get:
@@ -598,6 +656,9 @@ paths:
       description: |
         Download an exposed file. Requires download permission and approved access for free exposures.
         No authentication required, but access must be approved.
+        
+        **Note**: This endpoint returns binary content and should not be tested directly in Swagger UI.
+        Use a proper HTTP client or browser for file downloads.
       tags: [Access Management]
       security: []
       parameters:
@@ -609,16 +670,358 @@ paths:
             type: string
       responses:
         '200':
-          description: File content
+          description: File content (binary download)
           content:
-            application/octet-stream:
+            '*/*':
               schema:
                 type: string
                 format: binary
+                description: Binary file content
+          headers:
+            Content-Disposition:
+              description: Attachment with original filename
+              schema:
+                type: string
+            Content-Type:
+              description: MIME type of the file
+              schema:
+                type: string
+            Content-Length:
+              description: File size in bytes
+              schema:
+                type: integer
         '403':
           description: Access not approved or download not permitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Exposure or file not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Premium Features Endpoints
+  /premium/expose:
+    post:
+      summary: Create premium exposure
+      description: Create file exposure with phone-based sharing for premium users
+      tags: [Premium Features]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file_id, permission, shared_with_phones]
+              properties:
+                file_id:
+                  type: integer
+                  description: ID of file to expose
+                  example: 1
+                permission:
+                  type: string
+                  enum: [read_only, download]
+                  description: Permission level
+                  example: "download"
+                expires_minutes:
+                  type: integer
+                  minimum: 1
+                  maximum: 1440
+                  description: Expiration time in minutes (1-1440)
+                  example: 720
+                shared_with_phones:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  description: Phone numbers to share with
+                  example: ["+918043652258", "+919876543210"]
+                max_downloads_per_recipient:
+                  type: integer
+                  minimum: 1
+                  description: Maximum downloads per recipient
+                  example: 3
+      responses:
+        '201':
+          description: Premium exposure created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PremiumExposureResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Premium features require premium subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /premium/exposures:
+    get:
+      summary: List premium exposures
+      description: List all premium exposures for current user
+      tags: [Premium Features]
+      responses:
+        '200':
+          description: List of premium exposures
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PremiumExposureResponse'
+        '403':
+          description: Premium features require premium subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /premium/share/add:
+    post:
+      summary: Add recipient to exposure
+      description: Add a new recipient to an existing premium exposure
+      tags: [Premium Features]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [exposure_hash, phone]
+              properties:
+                exposure_hash:
+                  type: string
+                  description: Hash of exposure to add recipient to
+                  example: "abc123def456..."
+                phone:
+                  type: string
+                  description: Phone number to share with
+                  example: "+919999999999"
+                max_downloads:
+                  type: integer
+                  minimum: 1
+                  description: Maximum downloads for this recipient
+                  example: 2
+      responses:
+        '201':
+          description: Recipient added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PremiumShareResponse'
+        '400':
+          description: Invalid phone number format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Premium exposure not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Phone number already has access to this file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /premium/share/revoke:
+    post:
+      summary: Revoke share access
+      description: Revoke access for a specific recipient
+      tags: [Premium Features]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [share_id]
+              properties:
+                share_id:
+                  type: integer
+                  description: ID of share to revoke
+                  example: 1
+      responses:
+        '200':
+          description: Share access revoked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Share access revoked successfully"
+                  share_id:
+                    type: integer
+                  revoked_phone:
+                    type: string
+        '404':
+          description: Share not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized to revoke this share
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /premium/access/{access_token}:
+    get:
+      summary: Access premium file
+      description: Access premium shared file with token and phone verification
+      tags: [Premium Features]
+      security: []
+      parameters:
+        - name: access_token
+          in: path
+          required: true
+          description: Access token for the shared file
+          schema:
+            type: string
+        - name: phone
+          in: query
+          required: true
+          description: Phone number for verification
+          schema:
+            type: string
+            example: "+918043652258"
+      responses:
+        '200':
+          description: File access information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  file_name:
+                    type: string
+                    example: "document.pdf"
+                  file_size:
+                    type: integer
+                    example: 1048576
+                  mime_type:
+                    type: string
+                    example: "application/pdf"
+                  permission:
+                    type: string
+                    enum: [read_only, download]
+                  download_count:
+                    type: integer
+                    description: Number of downloads used by this recipient
+                  max_downloads:
+                    type: integer
+                    nullable: true
+                    description: Maximum downloads allowed for this recipient
+                  expires_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+        '400':
+          description: Invalid access token format or phone number
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Invalid access token or phone number
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '410':
+          description: Access token has expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /premium/download/{access_token}:
+    get:
+      summary: Download premium file
+      description: |
+        Download premium shared file with token and phone verification.
+        
+        **Note**: This endpoint returns binary content and should not be tested directly in Swagger UI.
+        Use a proper HTTP client or browser for file downloads.
+      tags: [Premium Features]
+      security: []
+      parameters:
+        - name: access_token
+          in: path
+          required: true
+          description: Access token for the shared file
+          schema:
+            type: string
+        - name: phone
+          in: query
+          required: true
+          description: Phone number for verification
+          schema:
+            type: string
+            example: "+918043652258"
+      responses:
+        '200':
+          description: File download (binary content)
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+                description: Binary file content
+          headers:
+            Content-Disposition:
+              description: File attachment with original filename
+              schema:
+                type: string
+            Content-Type:
+              description: MIME type of the file
+              schema:
+                type: string
+            Content-Length:
+              description: File size in bytes
+              schema:
+                type: integer
+        '400':
+          description: Invalid access token format or phone number
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Download limit exceeded or download not permitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Invalid access token, phone number, or file not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   # Approval Management Endpoints
   /approve/pending:
@@ -697,6 +1100,10 @@ paths:
                     enum: [approved, denied]
         '404':
           description: Access request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /approve/bulk-decision:
     post:
@@ -730,10 +1137,12 @@ paths:
                 properties:
                   message:
                     type: string
+                    example: "Bulk decision processed successfully"
                   processed_count:
                     type: integer
                   status:
                     type: string
+                    enum: [approved, denied]
 
   /approve/history:
     get:
@@ -837,6 +1246,12 @@ paths:
                   timestamp:
                     type: string
                     format: date-time
+                  service:
+                    type: string
+                    example: "Drive API"
+                  version:
+                    type: string
+                    example: "1.0.0"
 
 components:
   securitySchemes:
@@ -853,20 +1268,159 @@ components:
         detail:
           type: string
           description: Error message
+          example: "File not found"
         code:
           type: string
           description: Error code
       required:
         - detail
+
     FileInfo:
       type: object
       properties:
         id:
           type: integer
+          example: 1
         original_name:
           type: string
+          example: "document.pdf"
         file_size:
           type: integer
+          description: File size in bytes
+          example: 1048576
+        mime_type:
+          type: string
+          example: "application/pdf"
+        uploaded_at:
+          type: string
+          format: date-time
+          example: "2025-01-22T10:30:00Z"
+        user_id:
+          type: integer
+          example: 1
+        status:
+          type: string
+          enum: [uploaded, exposed, deleted]
+          example: "uploaded"
+
+    ExposureResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        exposure_hash:
+          type: string
+          description: Unique hash for accessing the exposed file
+          example: "abc123def456..."
+        file_id:
+          type: integer
+          example: 1
+        file_name:
+          type: string
+          example: "document.pdf"
+        permission:
+          type: string
+          enum: [read_only, download]
+          example: "download"
+        exposure_type:
+          type: string
+          enum: [free, premium]
+          example: "free"
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-01-22T10:35:00Z"
+        is_active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-22T10:30:00Z"
+
+    PremiumShareResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        exposure_id:
+          type: integer
+          example: 1
+        shared_with_phone:
+          type: string
+          example: "+918043652258"
+        access_token:
+          type: string
+          description: Secure access token for this recipient
+          example: "def789ghi012..."
+        status:
+          type: string
+          enum: [active, expired, revoked]
+          example: "active"
+        download_count:
+          type: integer
+          description: Number of downloads used by this recipient
+          example: 2
+        max_downloads:
+          type: integer
+          nullable: true
+          description: Maximum downloads allowed for this recipient
+          example: 5
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-01-22T22:30:00Z"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-22T10:30:00Z"
+
+    PremiumExposureResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        exposure_hash:
+          type: string
+          description: Unique hash for the exposure
+          example: "abc123def456..."
+        file_id:
+          type: integer
+          example: 1
+        permission:
+          type: string
+          enum: [read_only, download]
+          example: "download"
+        exposure_type:
+          type: string
+          example: "premium"
+        premium_token:
+          type: string
+          nullable: true
+          description: Main premium token for the exposure
+          example: "xyz789uvw012..."
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-01-22T22:30:00Z"
+        shared_recipients:
+          type: array
+          items:
+            $ref: '#/components/schemas/PremiumShareResponse'
+          description: List of recipients and their access details
+        is_active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-22T10:30:00Z"
 
 tags:
   - name: Authentication
@@ -879,5 +1433,7 @@ tags:
     description: Request and manage access to exposed files
   - name: Approval Management
     description: Approve or deny access requests
+  - name: Premium Features
+    description: Premium user features with phone-based sharing and secure tokens
   - name: Utility
     description: Health checks and system information

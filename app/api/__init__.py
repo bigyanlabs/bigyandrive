@@ -5,6 +5,7 @@ from .expose import router as expose_router
 from .access import router as access_router
 from .approve import router as approve_router
 from .health import router as health_router
+from .premium import router as premium_router
 
 __all__ = [
     "auth_router",
@@ -12,5 +13,6 @@ __all__ = [
     "expose_router",
     "access_router",
     "approve_router",
-    "health_router"
+    "health_router",
+    "premium_router"
 ]

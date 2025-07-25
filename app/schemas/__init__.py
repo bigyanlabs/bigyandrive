@@ -33,6 +33,15 @@ from .user import (
     UserResponse,
 )
 
+from .premium import (
+    PremiumExposeFile,
+    PremiumAccessRequest,
+    PremiumShareResponse,
+    PremiumExposureResponse,
+    AddRecipientRequest,
+    RevokeShareRequest
+)
+
 __all__ = [
     # Auth
     "PhoneRegister",
@@ -63,4 +72,12 @@ __all__ = [
     "UserUpdate",
     "UserStats",
     "UserResponse",
+
+    # Premium
+    "PremiumExposeFile",
+    "PremiumAccessRequest",
+    "PremiumShareResponse",
+    "PremiumExposureResponse",
+    "AddRecipientRequest",
+    "RevokeShareRequest",
 ]

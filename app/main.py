@@ -1,4 +1,3 @@
-# main.py
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
@@ -12,7 +11,8 @@ from app.api import (
     expose_router,
     access_router,
     approve_router,
-    health_router
+    health_router,
+    premium_router
 )
 
 security = HTTPBearer()
@@ -69,6 +69,7 @@ app.include_router(expose_router)
 app.include_router(access_router)
 app.include_router(approve_router)
 app.include_router(health_router)
+app.include_router(premium_router)
 
 
 @app.exception_handler(500)

@@ -6,7 +6,9 @@ from .security import (
     generate_file_hash,
     create_access_token,
     verify_token,
-    generate_premium_token,
+    generate_premium_share_token,
+    verify_premium_token_format,
+
 )
 
 from .storage import (
@@ -47,7 +49,6 @@ __all__ = [
     "generate_file_hash",
     "create_access_token",
     "verify_token",
-    "generate_premium_token",
     
     # Storage
     "save_file",
@@ -66,6 +67,8 @@ __all__ = [
     "blacklist_ip",
     "is_exposure_expired",
     "can_access_file",
+    "generate_premium_share_token",
+    "verify_premium_token_format",
     
     # Validators
     "validate_phone",
