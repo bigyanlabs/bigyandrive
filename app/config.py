@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_url: str = "sqlite:///./drive.db"
+    database_url: str = "sqlite:///./db/drive.db"
     
     secret_key: str = "xolo"
     algorithm: str = "HS256"

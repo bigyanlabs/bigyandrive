@@ -46,7 +46,7 @@ if [ ! -f ".env" ]; then
     echo -e "${YELLOW}⚠️  .env file not found. Creating template...${NC}"
     cat > .env << EOF
 # Database
-DATABASE_URL=sqlite:///./drive.db
+DATABASE_URL=sqlite:///./db/drive.db
 
 # Security
 SECRET_KEY=your-secret-key-change-this-in-production
